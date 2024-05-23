@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Container, Typography, Box, Table, TableBody, TableCell, TableHead, TableRow, TextField, Button,CircularProgress } from '@mui/material';
+import { Container, Typography, Box, Table, TableBody, TableCell, TableHead, TableRow, TextField, Button, CircularProgress, IconButton } from '@mui/material';
+import DeleteIcon from '@mui/icons-material/Delete';
 import axios from 'axios';
 
 interface WatchlistProps {
@@ -10,6 +11,7 @@ const Watchlist: React.FC<WatchlistProps> = ({ userId }) => {
   const [watchlist, setWatchlist] = useState<{ symbol: string; price: number }[]>([]);
   const [symbol, setSymbol] = useState('');
   const [loading, setLoading] = useState<boolean>(true);
+
   useEffect(() => {
     const fetchWatchlist = async () => {
       if (!userId) {
@@ -47,6 +49,21 @@ const Watchlist: React.FC<WatchlistProps> = ({ userId }) => {
     }
   };
 
+  const handleDeleteFromWatchlist = async (symbolToDelete: string) => {
+    if (!userId) {
+      console.warn('No user ID provided');
+      return;
+    }
+    try {
+      await axios.delete(`http://127.0.0.1:8000/api/watchlist/delete/${symbolToDelete}/`, {
+        params: { user_id: userId }
+      });
+      setWatchlist(watchlist.filter(stock => stock.symbol !== symbolToDelete));
+    } catch (error) {
+      console.error('Failed to delete from watchlist:', error);
+    }
+  };
+
   return (
     <Container maxWidth="md">
       <Box mt={5}>
@@ -70,6 +87,7 @@ const Watchlist: React.FC<WatchlistProps> = ({ userId }) => {
             <TableRow>
               <TableCell>Symbol</TableCell>
               <TableCell>Price</TableCell>
+              <TableCell>Action</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -77,6 +95,11 @@ const Watchlist: React.FC<WatchlistProps> = ({ userId }) => {
               <TableRow key={index}>
                 <TableCell>{stock.symbol}</TableCell>
                 <TableCell>{stock.price}</TableCell>
+                <TableCell>
+                  <IconButton onClick={() => handleDeleteFromWatchlist(stock.symbol)}>
+                    <DeleteIcon />
+                  </IconButton>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
